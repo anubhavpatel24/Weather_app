@@ -8,7 +8,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Inter', 'system-ui', 'sans-serif'],
+                sans: ['Outfit', 'system-ui', 'sans-serif'],
+                display: ['Syne', 'system-ui', 'sans-serif'],
             },
             keyframes: {
                 fadeIn: {

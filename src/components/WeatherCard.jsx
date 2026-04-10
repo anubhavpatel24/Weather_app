@@ -1,71 +1,152 @@
-
+import { createElement } from 'react';
 import { getWeatherDescription } from '../services/weatherApi';
 import {
-    Cloud, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Droplets, Thermometer, CloudFog, CloudDrizzle, Snowflake, Eye, Gauge, Sunrise, Sunset
+  Cloud,
+  Sun,
+  CloudRain,
+  CloudLightning,
+  Wind,
+  Droplets,
+  CloudFog,
+  CloudDrizzle,
+  Snowflake,
+  Gauge,
 } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 const iconMap = {
-    'sun': Sun,
-    'cloud-sun': Cloud, // Lucide doesn't have cloud-sun combo exactly like FontAwesome, using Cloud or Sun mostly. Let's use generic Cloud for now or specific ones. 
-    'cloud': Cloud,
-    'cloud-rain': CloudRain,
-    'cloud-drizzle': CloudDrizzle,
-    'snowflake': Snowflake,
-    'cloud-lightning': CloudLightning,
-    'cloud-fog': CloudFog,
-    'help-circle': Sun // Fallback
+  sun: Sun,
+  'cloud-sun': Cloud,
+  cloud: Cloud,
+  'cloud-rain': CloudRain,
+  'cloud-drizzle': CloudDrizzle,
+  snowflake: Snowflake,
+  'cloud-lightning': CloudLightning,
+  'cloud-fog': CloudFog,
+  'help-circle': Sun,
 };
 
-// Better icon mapping helper if needed
-const getIconComponent = (iconName) => {
-    return iconMap[iconName] || Sun;
-}
-
 export function WeatherCard({ current, location }) {
-    if (!current || !location) return null;
+  if (!current || !location) return null;
 
-    const { temperature_2m, relative_humidity_2m, weather_code, wind_speed_10m, apparent_temperature } = current;
-    const { label, icon } = getWeatherDescription(weather_code);
-    const WeatherIcon = getIconComponent(icon);
+  const {
+    temperature_2m,
+    relative_humidity_2m,
+    weather_code,
+    wind_speed_10m,
+    apparent_temperature,
+    pressure_msl,
+    cloud_cover,
+  } = current;
+  const { label, icon } = getWeatherDescription(weather_code);
+  const MainIcon = iconMap[icon] || Sun;
 
-    return (
-        <div className="flex flex-col items-center justify-center py-3 text-gray-800 dark:text-white animate-fade-in">
-            <div className="text-center mb-2">
-                <h2 className="text-2xl font-bold tracking-tight mb-0">{location.name}</h2>
-                <p className="text-xs opacity-75">{location.country}</p>
-            </div>
+  const locationLine = [location.admin1, location.country].filter(Boolean).join(' · ') || location.country;
 
-            <div className="flex items-center justify-center gap-4 mb-3">
-                <div className="p-2 rounded-full bg-white/30 dark:bg-white/5 shadow-lg backdrop-blur-sm">
-                    <WeatherIcon className="w-16 h-16 text-indigo-500 dark:text-indigo-300 drop-shadow-md" />
-                </div>
-                <div className="flex flex-col items-start">
-                    <div className="text-5xl font-bold tracking-tighter bg-clip-text text-transparent bg-linear-to-b from-gray-800 to-gray-600 dark:from-white dark:to-gray-300">
-                        {Math.round(temperature_2m)}°
-                    </div>
-                    <p className="text-sm font-medium px-2 py-0.5 rounded-full bg-white/20 dark:bg-white/10 backdrop-blur-md mt-1">
-                        {label}
-                    </p>
-                </div>
-            </div>
+  return (
+    <section
+      className={cn(
+        'relative overflow-hidden rounded-[1.75rem] ring-1 ring-[var(--border)]',
+        'bg-[var(--surface-elevated)]/80 shadow-lg',
+        'animate-fade-in-up opacity-0 [animation-fill-mode:forwards]'
+      )}
+    >
+      <div
+        className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full blur-3xl"
+        style={{ background: 'var(--accent-glow)' }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full blur-3xl opacity-50"
+        style={{ background: 'var(--orb-2)' }}
+        aria-hidden
+      />
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full">
-                <StatCard icon={Wind} label="Wind" value={`${wind_speed_10m} km/h`} />
-                <StatCard icon={Droplets} label="Humidity" value={`${relative_humidity_2m}%`} />
-                <StatCard icon={Thermometer} label="Feels Like" value={`${Math.round(apparent_temperature)}°`} />
-                {/* Placeholder for UV or Pressure if available, reusing wind for now as placeholder or could remove */}
-                <StatCard icon={Eye} label="Visibility" value="10km" />
-            </div>
+      <div className="relative grid gap-8 p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-10 sm:p-8">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            Now
+          </p>
+          <h2 className="font-display mt-2 text-2xl font-bold tracking-tight text-[var(--text)] sm:text-3xl">
+            {location.name}
+          </h2>
+          {locationLine ? (
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{locationLine}</p>
+          ) : null}
+
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-[var(--surface)] px-3 py-1.5 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)]" />
+            {label}
+          </div>
         </div>
-    );
+
+        <div className="flex flex-row items-center gap-6 sm:flex-col sm:items-end sm:gap-2">
+          <div
+            className={cn(
+              'flex h-28 w-28 shrink-0 items-center justify-center rounded-3xl sm:h-32 sm:w-32',
+              'bg-[var(--surface)] ring-1 ring-[var(--border)]',
+              'shadow-inner'
+            )}
+          >
+            <MainIcon
+              className="h-16 w-16 text-[var(--accent)] sm:h-[4.5rem] sm:w-[4.5rem]"
+              strokeWidth={1.25}
+            />
+          </div>
+          <div className="flex flex-1 flex-col sm:items-end">
+            <span
+              className={cn(
+                'font-display text-6xl font-extrabold leading-none tracking-tight',
+                'text-gradient-accent tabular-nums sm:text-7xl'
+              )}
+            >
+              {Math.round(temperature_2m)}°
+            </span>
+            <span className="mt-1 text-sm font-medium text-[var(--text-muted)]">
+              Feels {Math.round(apparent_temperature)}°
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative grid grid-cols-2 gap-3 border-t border-[var(--border)] p-6 sm:grid-cols-4 sm:gap-4 sm:p-8">
+        <StatCard icon={Wind} label="Wind" value={`${wind_speed_10m} km/h`} />
+        <StatCard icon={Droplets} label="Humidity" value={`${relative_humidity_2m}%`} />
+        <StatCard
+          icon={Gauge}
+          label="Pressure"
+          value={
+            pressure_msl != null ? `${Math.round(pressure_msl)} hPa` : '—'
+          }
+        />
+        <StatCard
+          icon={Cloud}
+          label="Clouds"
+          value={cloud_cover != null ? `${Math.round(cloud_cover)}%` : '—'}
+        />
+      </div>
+    </section>
+  );
 }
 
-function StatCard({ icon: Icon, label, value }) {
-    return (
-        <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/5 backdrop-blur-sm transition-all hover:bg-white/50 dark:hover:bg-white/10">
-            <Icon className="w-5 h-5 mb-1 opacity-70" />
-            <span className="text-xs opacity-70">{label}</span>
-            <span className="font-bold text-sm">{value}</span>
-        </div>
-    );
+function StatCard({ icon, label, value }) {
+  return (
+    <div
+      className={cn(
+        'group flex flex-col gap-2 rounded-2xl p-4',
+        'bg-[var(--surface)] ring-1 ring-[var(--border)]',
+        'transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:ring-[var(--border-strong)]'
+      )}
+    >
+      <div className="flex items-center gap-2 text-[var(--text-muted)]">
+        {createElement(icon, {
+          className:
+            'h-4 w-4 text-[var(--accent)] transition-transform duration-300 group-hover:scale-110',
+          strokeWidth: 2,
+        })}
+        <span className="text-xs font-semibold uppercase tracking-wider">{label}</span>
+      </div>
+      <span className="font-display text-lg font-bold tabular-nums text-[var(--text)]">{value}</span>
+    </div>
+  );
 }
